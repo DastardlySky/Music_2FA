@@ -27,6 +27,39 @@ const ASSETS_DIR = path.join(__dirname, '../public/assets');
 const DATA_DIR = process.env.USERS_DATA_DIR || path.join(__dirname);
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
+// YouTube Cookie Support
+// Option 1: Set YOUTUBE_COOKIES env var with the entire cookies.txt content
+// Option 2: Set YOUTUBE_COOKIE_FILE=/path/to/cookies.txt
+const YOUTUBE_COOKIE_FILE = process.env.YOUTUBE_COOKIE_FILE || path.join(DATA_DIR, 'youtube_cookies.txt');
+const YOUTUBE_COOKIES_ENV = process.env.YOUTUBE_COOKIES;
+
+// Helper to build yt-dlp options with cookie support
+const getYtDlpOptions = (baseOptions = {}) => {
+    const options = {
+        ...baseOptions,
+        jsRuntimes: 'node',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        extractorArgs: 'youtube:player_client=android,web;po_token=web+https://www.youtube.com',
+    };
+
+    // Option 1: Use cookies from environment variable (write to temp file)
+    if (YOUTUBE_COOKIES_ENV) {
+        const tempCookieFile = path.join(DATA_DIR, '.youtube_cookies_temp.txt');
+        fs.writeFileSync(tempCookieFile, YOUTUBE_COOKIES_ENV);
+        options.cookies = tempCookieFile;
+        console.log('[DEBUG] Using YouTube cookies from environment variable');
+    }
+    // Option 2: Use cookies from file if it exists
+    else if (fs.existsSync(YOUTUBE_COOKIE_FILE)) {
+        options.cookies = YOUTUBE_COOKIE_FILE;
+        console.log(`[DEBUG] Using YouTube cookies from file: ${YOUTUBE_COOKIE_FILE}`);
+    } else {
+        console.log('[DEBUG] No YouTube cookies configured - may encounter bot detection');
+    }
+
+    return options;
+};
+
 // Ensure assets directory exists
 if (!fs.existsSync(ASSETS_DIR)) {
     fs.mkdirSync(ASSETS_DIR, { recursive: true });
@@ -128,16 +161,12 @@ app.post('/api/users/:username/songs', async (req, res) => {
 
     try {
         // Use a timeout for the search to prevent hanging
-        const searchPromise = exec(`ytsearch1:${searchQ}`, {
+        const searchPromise = exec(`ytsearch1:${searchQ}`, getYtDlpOptions({
             dumpJson: true,
             noPlaylist: true,
             skipDownload: true,
             noWarnings: true,
-            jsRuntimes: 'node',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            // Use Android client to bypass bot detection
-            extractorArgs: 'youtube:player_client=android,web;po_token=web+https://www.youtube.com',
-        });
+        }));
 
         const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Search timed out')), 20000)
@@ -189,7 +218,7 @@ app.post('/api/users/:username/songs', async (req, res) => {
         console.log(`[DEBUG] STARTING DOWNLOAD: "${title}" to "${songId}.opus"`);
 
         // Use high-efficiency download settings for maximum speed and minimal storage
-        await exec(videoUrl, {
+        await exec(videoUrl, getYtDlpOptions({
             format: 'worstaudio', // Download the smallest source file
             extractAudio: true,
             audioFormat: 'opus',  // Most efficient codec
@@ -200,11 +229,7 @@ app.post('/api/users/:username/songs', async (req, res) => {
             concurrentFragments: 16,
             noMtime: true,
             ffmpegLocation: ffmpegInstaller,
-            jsRuntimes: 'node',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            // Use Android client to bypass bot detection
-            extractorArgs: 'youtube:player_client=android,web;po_token=web+https://www.youtube.com',
-        });
+        }));
 
         console.log(`[DEBUG] DOWNLOAD COMPLETE: ${songId}.opus`);
 

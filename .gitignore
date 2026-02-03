@@ -18,6 +18,11 @@ dist-ssr
 # Local User Data (Keep template, ignore live data)
 /server/users.json
 
+# YouTube Cookies (Security: Never commit authentication data)
+youtube_cookies.txt
+.youtube_cookies_temp.txt
+**/youtube_cookies.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
