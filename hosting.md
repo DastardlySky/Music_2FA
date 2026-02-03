@@ -65,7 +65,9 @@ Since this is a research study, you need **persistent storage** for `users.json`
     - Go to your Railway project → Your service
     - Click **"Variables"** tab → **"Add Volume"**
     - **Mount Path**: `/data`
-    - **Size**: 1GB (more than enough for JSON data)
+    - **Size**: 1GB (sufficient for user data + ~50-100 songs)
+    
+    This volume will store both `users.json` AND the downloaded `.opus` song files.
 
 2.  **Set Environment Variable**:
     - In the same Variables tab, add:

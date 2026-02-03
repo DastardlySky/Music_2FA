@@ -21,11 +21,12 @@ ffmpeg.setFfmpegPath(ffmpegInstaller);
 app.use(cors());
 app.use(express.json());
 
-const ASSETS_DIR = path.join(__dirname, '../public/assets');
 // Support Railway volumes for persistent data storage
 // Set USERS_DATA_DIR=/data in Railway environment variables when using a volume
 const DATA_DIR = process.env.USERS_DATA_DIR || path.join(__dirname);
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
+// Store assets in the persistent volume too, so songs survive redeployments
+const ASSETS_DIR = path.join(DATA_DIR, 'assets');
 
 // YouTube Cookie Support
 // Option 1: Set YOUTUBE_COOKIES env var with the entire cookies.txt content
@@ -82,7 +83,7 @@ if (fs.existsSync(DIST_PATH)) {
     app.use(express.static(DIST_PATH));
 }
 
-// Serve assets directly for fallback
+// Serve assets from the persistent volume
 app.use('/assets', express.static(ASSETS_DIR));
 
 // Load users helper
