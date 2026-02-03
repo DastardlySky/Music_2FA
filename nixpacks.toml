@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ["nodePackages.npm", "python3", "ffmpeg"]
+
+[phases.install]
+dependsOn = ["setup"]
+# We create a symlink so that 'python' command points to 'python3' 
+# since yt-dlp-exec specifically looks for the 'python' binary name.
+cmds = ["mkdir -p /app/.bin", "ln -s $(which python3) /app/.bin/python", "npm ci"]
+
+[variables]
+NODE_ENV = "production"
+# Add our local bin to path so 'python' is found during install
+PATH = "/app/.bin:$PATH"
+NIXPACKS_NODE_VERSION = "20"
