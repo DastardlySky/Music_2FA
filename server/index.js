@@ -135,10 +135,12 @@ app.post('/api/users/:username/songs', async (req, res) => {
             noWarnings: true,
             jsRuntimes: 'node',
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            // Use Android client to bypass bot detection
+            extractorArgs: 'youtube:player_client=android,web;po_token=web+https://www.youtube.com',
         });
 
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Search timed out')), 15000)
+            setTimeout(() => reject(new Error('Search timed out')), 20000)
         );
 
         const searchResult = await Promise.race([searchPromise, timeoutPromise]);
@@ -195,11 +197,13 @@ app.post('/api/users/:username/songs', async (req, res) => {
             output: finalFile,
             noPlaylist: true,
             noPart: true,
-            concurrentFragments: 16, // Keep these for parallel speed boost
+            concurrentFragments: 16,
             noMtime: true,
             ffmpegLocation: ffmpegInstaller,
             jsRuntimes: 'node',
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            // Use Android client to bypass bot detection
+            extractorArgs: 'youtube:player_client=android,web;po_token=web+https://www.youtube.com',
         });
 
         console.log(`[DEBUG] DOWNLOAD COMPLETE: ${songId}.opus`);
