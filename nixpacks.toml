@@ -1,14 +1,17 @@
 [phases.setup]
-nixPkgs = ["nodePackages.npm", "python3", "ffmpeg"]
+nixPkgs = ["nodejs_20", "python3", "ffmpeg"]
 
 [phases.install]
-dependsOn = ["setup"]
-# We create a symlink so that 'python' command points to 'python3' 
-# since yt-dlp-exec specifically looks for the 'python' binary name.
-cmds = ["mkdir -p /app/.bin", "ln -s $(which python3) /app/.bin/python", "npm ci"]
+# Create a local bin directory and symlink python3 to python.
+# We set the PATH inline for npm ci so it can find the 'python' command.
+cmds = [
+  "mkdir -p /app/bin",
+  "ln -s $(which python3) /app/bin/python",
+  "PATH=/app/bin:$PATH npm ci"
+]
 
 [variables]
 NODE_ENV = "production"
-# Add our local bin to path so 'python' is found during install
-PATH = "/app/.bin:$PATH"
 NIXPACKS_NODE_VERSION = "20"
+# We don't set PATH here because Nixpacks doesn't support $PATH interpolation in the variables block,
+# which was causing 'command not found' errors in the previous build.
