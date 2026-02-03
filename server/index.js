@@ -230,7 +230,7 @@ app.post('/api/users/:username/songs', async (req, res) => {
 
         // Use high-efficiency download settings for maximum speed and minimal storage
         await exec(videoUrl, getYtDlpOptions({
-            format: 'bestaudio[ext=m4a]/bestaudio/best', // More compatible format selector
+            format: 'worstaudio/bestaudio[ext=m4a]/bestaudio/best', // Prefer smallest, fallback to best if needed
             extractAudio: true,
             audioFormat: 'opus',  // Most efficient codec
             audioQuality: 9,      // Maximum compression
