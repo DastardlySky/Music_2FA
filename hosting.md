@@ -53,3 +53,38 @@ For a study prototype where you want to keep the "flat file" (`users.json`) logi
 ### Environment Variables
 In your frontend, update the API URL:
 - `VITE_API_URL` = `https://your-backend-url.railway.app`
+
+---
+
+## Setting Up Persistent Storage on Railway
+
+Since this is a research study, you need **persistent storage** for `users.json` so you don't lose participant data when Railway redeploys.
+
+### Steps:
+1.  **Create a Volume** in Railway:
+    - Go to your Railway project → Your service
+    - Click **"Variables"** tab → **"Add Volume"**
+    - **Mount Path**: `/data`
+    - **Size**: 1GB (more than enough for JSON data)
+
+2.  **Set Environment Variable**:
+    - In the same Variables tab, add:
+      - `USERS_DATA_DIR` = `/data`
+      - `ADMIN_KEY` = `YOUR-SECRET-PASSWORD-HERE` (choose a strong random string)
+
+3.  **Redeploy**: Railway will restart with the volume attached. Your `users.json` will now persist across deployments.
+
+### Accessing Study Data
+
+To download your study data remotely:
+
+```bash
+curl "https://your-app.railway.app/api/admin/download-data?key=YOUR-SECRET-PASSWORD-HERE" -o study-data.json
+```
+
+Or simply open in your browser:
+```
+https://your-app.railway.app/api/admin/download-data?key=YOUR-SECRET-PASSWORD-HERE
+```
+
+This will download a file named `users-data-YYYY-MM-DD.json` with all participant accounts, songs, and metrics.

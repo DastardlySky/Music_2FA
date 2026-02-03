@@ -22,7 +22,10 @@ app.use(cors());
 app.use(express.json());
 
 const ASSETS_DIR = path.join(__dirname, '../public/assets');
-const USERS_FILE = path.join(__dirname, 'users.json');
+// Support Railway volumes for persistent data storage
+// Set USERS_DATA_DIR=/data in Railway environment variables when using a volume
+const DATA_DIR = process.env.USERS_DATA_DIR || path.join(__dirname);
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 // Ensure assets directory exists
 if (!fs.existsSync(ASSETS_DIR)) {
@@ -369,6 +372,22 @@ app.post('/api/metrics', (req, res) => {
         saveUsers(users);
     }
     res.json({ success: true });
+});
+
+// Admin endpoint to download study data
+// Access with ?key=YOUR_SECRET_KEY (set ADMIN_KEY env var on Railway)
+app.get('/api/admin/download-data', (req, res) => {
+    const adminKey = process.env.ADMIN_KEY || 'dev-secret-key';
+
+    if (req.query.key !== adminKey) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (!fs.existsSync(USERS_FILE)) {
+        return res.status(404).json({ error: 'No data file found' });
+    }
+
+    res.download(USERS_FILE, `users-data-${new Date().toISOString().split('T')[0]}.json`);
 });
 
 
