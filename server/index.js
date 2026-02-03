@@ -39,22 +39,33 @@ const getYtDlpOptions = (baseOptions = {}) => {
         ...baseOptions,
         jsRuntimes: 'node',
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        extractorArgs: 'youtube:player_client=android,web;po_token=web+https://www.youtube.com',
     };
+
+    let hasCookies = false;
 
     // Option 1: Use cookies from environment variable (write to temp file)
     if (YOUTUBE_COOKIES_ENV) {
         const tempCookieFile = path.join(DATA_DIR, '.youtube_cookies_temp.txt');
         fs.writeFileSync(tempCookieFile, YOUTUBE_COOKIES_ENV);
         options.cookies = tempCookieFile;
+        hasCookies = true;
         console.log('[DEBUG] Using YouTube cookies from environment variable');
     }
     // Option 2: Use cookies from file if it exists
     else if (fs.existsSync(YOUTUBE_COOKIE_FILE)) {
         options.cookies = YOUTUBE_COOKIE_FILE;
+        hasCookies = true;
         console.log(`[DEBUG] Using YouTube cookies from file: ${YOUTUBE_COOKIE_FILE}`);
     } else {
         console.log('[DEBUG] No YouTube cookies configured - may encounter bot detection');
+    }
+
+    // Use web client when cookies are present (android doesn't support cookies)
+    // Otherwise use android client to bypass bot detection
+    if (hasCookies) {
+        options.extractorArgs = 'youtube:player_client=web';
+    } else {
+        options.extractorArgs = 'youtube:player_client=android,web;po_token=web+https://www.youtube.com';
     }
 
     return options;
