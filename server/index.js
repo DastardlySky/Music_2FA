@@ -373,10 +373,14 @@ app.post('/api/metrics', (req, res) => {
 
 
 // Catch-all to serve index.html for React Router compatibility
+// Using app.use instead of app.get to avoid Express 5 path-to-regexp issues
 if (fs.existsSync(path.join(__dirname, '../dist'))) {
-    app.get('/:path*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
+    app.use((req, res, next) => {
+        // Only serve index.html for non-API routes that don't match static files
+        if (!req.path.startsWith('/api') && !req.path.startsWith('/assets')) {
             res.sendFile(path.join(__dirname, '../dist/index.html'));
+        } else {
+            next();
         }
     });
 }
