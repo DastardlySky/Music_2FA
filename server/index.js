@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Setup ffmpeg
 ffmpeg.setFfmpegPath(ffmpegInstaller);
@@ -28,6 +28,15 @@ const USERS_FILE = path.join(__dirname, 'users.json');
 if (!fs.existsSync(ASSETS_DIR)) {
     fs.mkdirSync(ASSETS_DIR, { recursive: true });
 }
+
+// Serve static files from the dist directory (built frontend)
+const DIST_PATH = path.join(__dirname, '../dist');
+if (fs.existsSync(DIST_PATH)) {
+    app.use(express.static(DIST_PATH));
+}
+
+// Serve assets directly for fallback
+app.use('/assets', express.static(ASSETS_DIR));
 
 // Load users helper
 const loadUsers = () => {
@@ -363,6 +372,15 @@ app.post('/api/metrics', (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+// Catch-all to serve index.html for React Router compatibility
+if (fs.existsSync(path.join(__dirname, '../dist'))) {
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.join(__dirname, '../dist/index.html'));
+        }
+    });
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
 });
